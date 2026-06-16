@@ -4,10 +4,15 @@ import "fmt"
 
 type Driver interface {
 	// Implementation
-	Init() error
+	// Init is called once before any other method, use it to setup the driver
+	Init() error	
+	// ListDirs should return a list of directories in the given path
 	ListDirs(path string) ([]string, error)
+	// Mkdir should create a directory in the given path
 	Mkdir(path string) error
+	// Delete should delete the given path
 	Delete(src string) error
+	// Copy should copy a local file from src to dst, and return the number of bytes copied
 	Copy(src, dst string) (int64, error)
 
 	// baseDriver

@@ -5,12 +5,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/sirupsen/logrus"
+	"context"
 )
 
 func init() {
@@ -21,12 +22,7 @@ type S3Driver struct {
 	BaseDriver
 
 	bucket string
-}
-
-func (d *S3Driver) getSession() *session.Session {
-	return session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+	cfg    aws.Config
 }
 
 func (d *S3Driver) Init() error {
@@ -36,11 +32,21 @@ func (d *S3Driver) Init() error {
 		return fmt.Errorf("you need to set 'GRB_S3_BUCKET' for a target bucket")
 	}
 
-	svc := sts.New(d.getSession())
-	identity, err := svc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	logrus.Debugf("Connected to s3 as %s", identity.String())
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return fmt.Errorf("unable to load AWS SDK config, %v", err)
+	}
+  d.cfg = cfg
+	
+	svc := sts.NewFromConfig(d.cfg)
+	identity, err := svc.GetCallerIdentity(context.TODO(),
+		&sts.GetCallerIdentityInput{})
+	if err != nil {
+		return err
+	}
+	logrus.Debugf("Connected to s3 as %s", aws.ToString(identity.Arn))
 
-	return err
+	return nil
 }
 
 func (d *S3Driver) ListDirs(path string) ([]string, error) {
@@ -85,22 +91,27 @@ func removeDuplicateStr(strSlice []string) []string {
 func (d *S3Driver) listRaw(path string) ([]string, error) {
 	res := []string{}
 
-	svc := s3.New(d.getSession())
+	svc := s3.NewFromConfig(d.cfg)
 
-	err := svc.ListObjectsV2Pages(&s3.ListObjectsV2Input{
+  paginator := s3.NewListObjectsV2Paginator(svc, &s3.ListObjectsV2Input{
 		Bucket:  aws.String(d.bucket),
 		Prefix:  aws.String(path),
-		MaxKeys: aws.Int64(20),
-	}, func(page *s3.ListObjectsV2Output, lastPage bool) bool {
-		for _, i := range page.Contents {
-			res = append(res, *i.Key)
-		}
-		return true
+		MaxKeys: aws.Int32(20),
 	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return res, err
+		}
+		for _, i := range page.Contents {
+			res = append(res, aws.ToString(i.Key))
+		}
+	}
 
 	logrus.Tracef("Listing %s:%s -> %v", d.bucket, path, res)
 
-	return res, err
+	return res, nil
 }
 
 func (d *S3Driver) Mkdir(path string) error {
@@ -115,10 +126,10 @@ func (d *S3Driver) Delete(src string) error {
 		return err
 	}
 
-	svc := s3.New(d.getSession())
+	svc := s3.NewFromConfig(d.cfg)
 	for _, item := range items {
 		logrus.Tracef("Deleting %s:%s", d.bucket, item)
-		if _, err := svc.DeleteObject(&s3.DeleteObjectInput{
+		if _, err := svc.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
 			Bucket: aws.String(d.bucket),
 			Key:    aws.String(item),
 		}); err != nil {
@@ -126,19 +137,21 @@ func (d *S3Driver) Delete(src string) error {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (d *S3Driver) Copy(src, dst string) (int64, error) {
-	uploader := s3manager.NewUploader(d.getSession())
+	uploader := manager.NewUploader(s3.NewFromConfig(d.cfg))
 
 	f, err := os.Open(src)
 	if err != nil {
 		return 0, fmt.Errorf("failed to open file %q, %v", src, err)
 	}
 
+	defer f.Close()
+
 	logrus.Tracef("Uploading %s to %s:%s", src, d.bucket, dst)
-	_, err = uploader.Upload(&s3manager.UploadInput{
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(d.bucket),
 		Key:    aws.String(dst),
 		Body:   f,

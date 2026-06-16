@@ -3,7 +3,6 @@ package drivers
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -22,7 +21,7 @@ func (d *LocalDriver) Init() error {
 
 func (d *LocalDriver) ListDirs(path string) ([]string, error) {
 	res := []string{}
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		return res, err
 	}
