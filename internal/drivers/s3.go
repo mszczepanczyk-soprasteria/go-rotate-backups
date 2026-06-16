@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/sirupsen/logrus"
 	"context"
@@ -141,7 +141,7 @@ func (d *S3Driver) Delete(src string) error {
 }
 
 func (d *S3Driver) Copy(src, dst string) (int64, error) {
-	uploader := manager.NewUploader(s3.NewFromConfig(d.cfg))
+	client := transfermanager.New(s3.NewFromConfig(d.cfg))
 
 	f, err := os.Open(src)
 	if err != nil {
@@ -151,7 +151,7 @@ func (d *S3Driver) Copy(src, dst string) (int64, error) {
 	defer f.Close()
 
 	logrus.Tracef("Uploading %s to %s:%s", src, d.bucket, dst)
-	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+	_, err = client.UploadObject(context.TODO(), &transfermanager.UploadObjectInput{
 		Bucket: aws.String(d.bucket),
 		Key:    aws.String(dst),
 		Body:   f,
