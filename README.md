@@ -63,7 +63,7 @@ Usage:
 
 Flags:
       --daily int          Amount of daily backups to keep (default 7)
-      --driver string      Driver selection (file, s3) (default "file")
+      --driver string      Driver selection (local, s3, azblob) (default "local")
   -h, --help               help for go-rotate-backups
       --monthly int        Amount of monthly backups to keep (default 12)
       --target string      Base location where backup live (default "./backups")
@@ -113,6 +113,23 @@ credentials you will need to set the following environment variables:
 | --- | --- |
 | `GRB_S3_BUCKET` | The bucket name |
 | `AWS_*`  | AWS credentials to use. This can be either `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` or `AWS_PROFILE` if you want to use the shared credential file |
+
+
+__azblob__
+
+The azblob driver uses [Azure Blob Storage](https://azure.microsoft.com/products/storage/blobs) to store
+it's data. Set the target container using the `GRB_AZURE_CONTAINER` environment variable.
+
+Authentication is resolved in the following order of precedence:
+
+| Name | Description |
+| --- | --- |
+| `GRB_AZURE_CONTAINER` | The target container name (required) |
+| `AZURE_STORAGE_CONNECTION_STRING` | Full connection string. When set, it is used for authentication |
+| `AZURE_STORAGE_ACCOUNT` + `AZURE_STORAGE_KEY` | Storage account name and shared key |
+| `AZURE_STORAGE_ACCOUNT` + `AZURE_*` | Storage account name combined with `DefaultAzureCredential` (managed identity, workload identity, service principal via `AZURE_TENANT_ID`/`AZURE_CLIENT_ID`/`AZURE_CLIENT_SECRET`, Azure CLI, ...) |
+
+
 
 
 ## Badges

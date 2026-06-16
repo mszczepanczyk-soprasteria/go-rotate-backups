@@ -50,7 +50,7 @@ func init() {
 	rootCmd.Flags().IntVar(&keepMonthly, "monthly", 12, "Amount of monthly backups to keep")
 	rootCmd.Flags().IntVar(&keepYearly, "yearly", 5, "Amount of yearly backups to keep")
 	rootCmd.Flags().StringVar(&targetDir, "target", "./backups", "Base location where backup live")
-	rootCmd.Flags().StringVar(&driverName, "driver", "local", "Driver selection (local, s3)")
+	rootCmd.Flags().StringVar(&driverName, "driver", "local", "Driver selection (local, s3, azblob)")
 
 	// Extras
 	rootCmd.Flags().StringVarP(&v, "verbosity", "v", logrus.InfoLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
