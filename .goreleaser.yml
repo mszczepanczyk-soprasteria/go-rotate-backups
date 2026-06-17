@@ -1,8 +1,9 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
 
 env:
   - PROJECT_DESCRIPTION=
-  - PROJECT_HOMEPAGE=https://stenic.io
+  - PROJECT_HOMEPAGE=https://github.com/mszczepanczyk-soprasteria/go-rotate-backups
   - LICENSE=MIT
 
 before:
@@ -37,28 +38,26 @@ archives:
   - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     format_overrides:
     - goos: windows
-      format: zip
+      formats: 
+        - zip
     files:
       - README.md
       - LICENSE
 
-brews:
-  - repository:
-      owner: stenic
+homebrew_casks:
+  - name: go-rotate-backups
+    repository:
+      owner: mszczepanczyk
       name: homebrew-tap
-    folder: Formula
     homepage: "{{ .Env.PROJECT_HOMEPAGE }}"
     description: "{{ .Env.PROJECT_DESCRIPTION }}"
     license: "{{ .Env.LICENSE }}"
-    test: |
-      system "#{bin}/{{ .ProjectName }} -v"
     dependencies: []
-    install: |-
-      bin.install "{{ .ProjectName }}"
 
 scoops:
-  - repository:
-      owner: stenic
+  - name: go-rotate-backups
+    repository:
+      owner: mszczepanczyk
       name: scoop-bucket
     homepage: "{{ .Env.PROJECT_HOMEPAGE }}"
     description: "{{ .Env.PROJECT_DESCRIPTION }}"
@@ -69,9 +68,9 @@ nfpms:
     id: packages
     homepage: "{{ .Env.PROJECT_HOMEPAGE }}"
     description: "{{ .Env.PROJECT_DESCRIPTION }}"
-    maintainer: Dries De Peuter <dries@stenic.io>
+    maintainer: Maksymilian Szczepanczyk <m.szczepanczyk@ext.soprasteria.com>
     license: "{{ .Env.LICENSE }}"
-    vendor: Stenic
+    vendor: mszczepanczyk
     formats:
     - apk
     - deb
