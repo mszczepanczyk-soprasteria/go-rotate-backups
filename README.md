@@ -2,7 +2,7 @@
 
 > Still a WIP
 
-go-rotate-backups backups up files to a target and rotates them. It currently only has support for `local` and `s3`.
+go-rotate-backups backups up files to a target and rotates them. It currently has support for `local`, `s3` and `azure`.
 
 ```shell
 $ tree -L 1 backups 
