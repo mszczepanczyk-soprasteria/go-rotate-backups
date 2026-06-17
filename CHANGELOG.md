@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.4.0](https://github.com/mszczepanczyk-soprasteria/go-rotate-backups/compare/v1.3.0...v1.4.0) (2026-06-17)
+
+
+### Features
+
+* Add azure driver ([2fc79bd](https://github.com/mszczepanczyk-soprasteria/go-rotate-backups/commit/2fc79bd76313848487e400fc40df7daea7c6b052))
+
 # [1.3.0](https://github.com/stenic/go-rotate-backups/compare/v1.2.2...v1.3.0) (2023-12-08)
 
 
